@@ -1,4 +1,4 @@
-name: Build ColorWordle APK
+name: Build Colour Wordle APK
 
 on:
   workflow_dispatch:
@@ -36,11 +36,10 @@ jobs:
             -type f -name sdkmanager 2>/dev/null | head -n 1)"
 
           if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: Android SDK manager was not found."
+            echo "ERROR: Android SDK manager not found."
             exit 1
           fi
 
-          echo "Using SDK manager: $SDKMANAGER"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
 
           yes | "$SDKMANAGER" --licenses >/dev/null || true
@@ -55,20 +54,12 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Verify uploaded source files
+      - name: Verify source files
         shell: bash
         run: |
           set -euo pipefail
-
-          test -f "Colour Wordle 2.html" || {
-            echo "ERROR: Missing Colour Wordle 2.html"
-            exit 1
-          }
-
-          test -f "1792679266543~2.jpg" || {
-            echo "ERROR: Missing 1792679266543~2.jpg"
-            exit 1
-          }
+          test -f "Colour Wordle 2.html"
+          test -f "1792679266543~2.jpg"
 
       - name: Generate Android project
         shell: bash
@@ -78,6 +69,7 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/values-v31
           mkdir -p app/src/main/java/com/colourwordle/app
 
           cp "Colour Wordle 2.html" app/src/main/assets/index.html
@@ -91,7 +83,6 @@ jobs:
                   gradlePluginPortal()
               }
           }
-
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
@@ -99,8 +90,7 @@ jobs:
                   mavenCentral()
               }
           }
-
-          rootProject.name = 'ColorWordle2'
+          rootProject.name = 'ColourWordle'
           include ':app'
           GRADLE
 
@@ -123,16 +113,28 @@ jobs:
                   applicationId 'com.colourwordle.app'
                   minSdk 23
                   targetSdk 32
-                  versionCode 2
-                  versionName '2.0'
+                  versionCode 4
+                  versionName '4.0'
               }
           }
           GRADLE
 
           cat > app/src/main/res/values/strings.xml <<'XML'
           <resources>
-              <string name="app_name">Color Wordle 2</string>
+              <string name="app_name">Colour Wordle</string>
           </resources>
+          XML
+
+          cat > app/src/main/res/drawable/splash_icon.xml <<'XML'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#030615"
+                  android:pathData="M0,0h108v108h-108z" />
+          </vector>
           XML
 
           cat > app/src/main/res/values/styles.xml <<'XML'
@@ -140,11 +142,28 @@ jobs:
               <style name="AppTheme"
                   parent="android:style/Theme.Material.NoActionBar">
                   <item name="android:fontFamily">sans</item>
-                  <item name="android:colorAccent">#22D3EE</item>
                   <item name="android:windowBackground">#030615</item>
-                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:colorAccent">#22D3EE</item>
                   <item name="android:statusBarColor">#030615</item>
                   <item name="android:navigationBarColor">#030615</item>
+                  <item name="android:windowLightStatusBar">false</item>
+              </style>
+          </resources>
+          XML
+
+          cat > app/src/main/res/values-v31/styles.xml <<'XML'
+          <resources>
+              <style name="AppTheme"
+                  parent="android:style/Theme.Material.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:windowBackground">#030615</item>
+                  <item name="android:colorAccent">#22D3EE</item>
+                  <item name="android:statusBarColor">#030615</item>
+                  <item name="android:navigationBarColor">#030615</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:windowSplashScreenBackground">#030615</item>
+                  <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+                  <item name="android:windowSplashScreenAnimationDuration">0</item>
               </style>
           </resources>
           XML
@@ -263,26 +282,23 @@ jobs:
           }
           JAVA
 
-      - name: Build debug APK
+      - name: Build APK
         run: gradle --no-daemon --stacktrace assembleDebug
 
       - name: Rename APK
         shell: bash
         run: |
           set -euo pipefail
-
           mkdir -p release
-
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "release/ColorWordle 1.apk"
+            "release/Wordle 3.apk"
+          test -s "release/Wordle 3.apk"
 
-          test -s "release/ColorWordle 1.apk"
-
-      - name: Upload ColorWordle 1 APK
+      - name: Upload Wordle 3 APK
         uses: actions/upload-artifact@v4
         with:
-          name: ColorWordle-1-APK
-          path: release/ColorWordle 1.apk
+          name: Wordle-3
+          path: release/Wordle 3.apk
           if-no-files-found: error
           retention-days: 14
           
